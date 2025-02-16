@@ -6,6 +6,7 @@ import emailjs from "@emailjs/browser";
 
 const EmailSection = () => {
   const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     subject: "",
@@ -18,8 +19,16 @@ const EmailSection = () => {
   };
 
   // Handle Submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Basic Validation
+    if (!formData.email || !formData.subject || !formData.message) {
+      setErrorMessage("All fields are required.");
+      return;
+    }
+
+    setErrorMessage(""); // Reset error message
 
     const templateParams = {
       email: formData.email,
@@ -27,33 +36,26 @@ const EmailSection = () => {
       message: formData.message,
     };
 
-    emailjs
-      .send(
-        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID, // ✅ Use env variable
-        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, // ✅ Use env variable
+    try {
+      const response = await emailjs.send(
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
         templateParams,
-        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY // ✅ Use env variable
-      )
-      .then(
-        (response) => {
-          console.log("Message sent successfully!", response);
-          setEmailSubmitted(true);
-        },
-        (error) => {
-          console.error("Failed to send message:", error);
-        }
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
       );
 
-    // Reset Form
-    setFormData({ email: "", subject: "", message: "" });
+      console.log("Message sent successfully!", response);
+      setEmailSubmitted(true);
+      setFormData({ email: "", subject: "", message: "" }); // Reset form
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setErrorMessage("Failed to send message. Please try again later.");
+    }
   };
 
   return (
-    <section
-      id="contact"
-      className="grid md:grid-cols-2 my-12 md:my-12 py-24 gap-4 relative"
-    >
-      <div className="z-10">
+    <section id="contact" className="grid md:grid-cols-2 my-12 py-24 gap-4">
+      <div>
         <h5 className="text-xl font-bold text-white my-2">
           Let&apos;s Connect
         </h5>
@@ -78,6 +80,10 @@ const EmailSection = () => {
           </p>
         ) : (
           <form className="flex flex-col" onSubmit={handleSubmit}>
+            {errorMessage && (
+              <p className="text-red-500 text-sm mb-2">{errorMessage}</p>
+            )}
+
             <div className="mb-6">
               <label
                 htmlFor="email"
@@ -92,7 +98,7 @@ const EmailSection = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="bg-[#18191E] border border-[#33353F] placeholder-[#9CA2A9] text-gray-100 text-sm rounded-lg block w-full p-2.5"
+                className="bg-[#18191E] border border-[#33353F] text-gray-100 text-sm rounded-lg block w-full p-2.5"
                 placeholder="you@example.com"
               />
             </div>
@@ -111,7 +117,7 @@ const EmailSection = () => {
                 value={formData.subject}
                 onChange={handleChange}
                 required
-                className="bg-[#18191E] border border-[#33353F] placeholder-[#9CA2A9] text-gray-100 text-sm rounded-lg block w-full p-2.5"
+                className="bg-[#18191E] border border-[#33353F] text-gray-100 text-sm rounded-lg block w-full p-2.5"
                 placeholder="Just saying hi"
               />
             </div>
@@ -129,7 +135,7 @@ const EmailSection = () => {
                 value={formData.message}
                 onChange={handleChange}
                 required
-                className="bg-[#18191E] border border-[#33353F] placeholder-[#9CA2A9] text-gray-100 text-sm rounded-lg block w-full p-2.5"
+                className="bg-[#18191E] border border-[#33353F] text-gray-100 text-sm rounded-lg block w-full p-2.5"
                 placeholder="Let's talk about..."
               />
             </div>
